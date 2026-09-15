@@ -2,11 +2,75 @@
 
 rofi_command="rofi -dmenu $@ -p Bluetooth"
 
-options=(
-    "Scan"
-    "Power"
+readonly OPTION_POWER="Power"
+readonly OPTION_SCAN="Scan"
+readonly OPTION_PAIRABLE="Pairable"
+readonly OPTION_DISCOVERABLE="Discoverable"
+
+get_property_state_string() {
+    local property="$1"
+    local expected_string
+
+    case "$property" in
+        "$OPTION_POWER")
+            expected_string="PowerState: on"
+            ;;
+        "$OPTION_SCAN")
+            expected_string="Discovering: yes"
+            ;;
+        "$OPTION_PAIRABLE")
+            expected_string="Pairable: yes"
+            ;;
+        "$OPTION_DISCOVERABLE")
+            expected_string="Discoverable: yes"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    if bluetoothctl show | grep -q "$expected_string"; then
+        echo "$property: on"
+    else
+        echo "$property: off"
+    fi
+}
+
+rofi_options=(
+    "$(get_property_state_string $OPTION_POWER)"
+    "$(get_property_state_string $OPTION_SCAN)"
+    "$(get_property_state_string $OPTION_PAIRABLE)"
+    "$(get_property_state_string $OPTION_DISCOVERABLE)"
 )
 
-choice=$(printf '%s\n' "${options[@]}" | ${rofi_command})
+choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command})
 
-echo $choice
+case "$choice" in
+    "$OPTION_POWER: on")
+        echo "Power -> off"
+        ;;
+    "$OPTION_POWER: off")
+        echo "Power -> on"
+        ;;
+    "$OPTION_SCAN: on")
+        echo "Scan -> off"
+        ;;
+    "$OPTION_SCAN: off")
+        echo "Scan -> on"
+        ;;
+    "$OPTION_PAIRABLE: on")
+        echo "Pairable -> off"
+        ;;
+    "$OPTION_PAIRABLE: off")
+        echo "Pairable -> on"
+        ;;
+    "$OPTION_DISCOVERABLE: on")
+        echo "Discoverable -> off"
+        ;;
+    "$OPTION_DISCOVERABLE: off")
+        echo "Discoverable -> on"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
