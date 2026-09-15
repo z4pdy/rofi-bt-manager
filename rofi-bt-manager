@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+rofi_command="rofi -dmenu $@ -p Bluetooth"
+
+options=(
+    "Scan"
+    "Power"
+)
+
+choice=$(printf '%s\n' "${options[@]}" | ${rofi_command})
+
+echo $choice
