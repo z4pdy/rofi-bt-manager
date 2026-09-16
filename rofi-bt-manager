@@ -36,39 +36,42 @@ get_property_state_string() {
     fi
 }
 
+power_state=$(get_property_state_string "$OPTION_POWER")
 rofi_options=(
-    "$(get_property_state_string $OPTION_POWER)"
-    "$(get_property_state_string $OPTION_SCAN)"
-    "$(get_property_state_string $OPTION_PAIRABLE)"
-    "$(get_property_state_string $OPTION_DISCOVERABLE)"
+    "$power_state"
 )
+if [[ "$power_state" == "$OPTION_POWER: on" ]]; then
+    rofi_options+=(
+        "$(get_property_state_string $OPTION_SCAN)"
+        "$(get_property_state_string $OPTION_PAIRABLE)"
+        "$(get_property_state_string $OPTION_DISCOVERABLE)"
+    )
+fi
 
 choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command})
 
 case "$choice" in
     "$OPTION_POWER: on")
-        echo "Power -> off"
+        bluetoothctl power off
         ;;
     "$OPTION_POWER: off")
-        echo "Power -> on"
-        ;;
-    "$OPTION_SCAN: on")
-        echo "Scan -> off"
+        bluetoothctl power on
         ;;
     "$OPTION_SCAN: off")
-        echo "Scan -> on"
+        bluetoothctl --timeout 5 scan on
         ;;
     "$OPTION_PAIRABLE: on")
-        echo "Pairable -> off"
+        bluetoothctl pairable off
         ;;
     "$OPTION_PAIRABLE: off")
-        echo "Pairable -> on"
+        bluetoothctl pairable on
         ;;
     "$OPTION_DISCOVERABLE: on")
+        bluetoothctl discoverable off
         echo "Discoverable -> off"
         ;;
     "$OPTION_DISCOVERABLE: off")
-        echo "Discoverable -> on"
+        bluetoothctl discoverable on
         ;;
     *)
         exit 0
