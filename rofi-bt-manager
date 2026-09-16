@@ -7,6 +7,10 @@ readonly OPTION_SCAN="Scan"
 readonly OPTION_PAIRABLE="Pairable"
 readonly OPTION_DISCOVERABLE="Discoverable"
 
+get_available_devices() {
+    mapfile -t devices < <(bluetoothctl devices| cut -d' ' -f3-)
+}
+
 get_property_state_string() {
     local property="$1"
     local expected_string
@@ -36,16 +40,26 @@ get_property_state_string() {
     fi
 }
 
+rofi_options=()
+
 power_state=$(get_property_state_string "$OPTION_POWER")
-rofi_options=(
-    "$power_state"
-)
 if [[ "$power_state" == "$OPTION_POWER: on" ]]; then
+    devices=()
+    get_available_devices devices
+    if (( ${#devices[@]} > 0 )); then
+        devices+=("======================")
+    fi
+    rofi_options+=("${devices[@]}")
+
+    rofi_options+=("$power_state")
+
     rofi_options+=(
-        "$(get_property_state_string $OPTION_SCAN)"
-        "$(get_property_state_string $OPTION_PAIRABLE)"
-        "$(get_property_state_string $OPTION_DISCOVERABLE)"
+        "$(get_property_state_string "$OPTION_SCAN")"
+        "$(get_property_state_string "$OPTION_PAIRABLE")"
+        "$(get_property_state_string "$OPTION_DISCOVERABLE")"
     )
+else
+    rofi_options+=("$power_state")
 fi
 
 choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command})
