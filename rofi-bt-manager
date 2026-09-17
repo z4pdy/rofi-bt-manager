@@ -2,20 +2,22 @@
 
 rofi_command="rofi -dmenu $@"
 
-readonly OPTION_POWER="Power"
-readonly OPTION_SCAN="Scan"
-readonly OPTION_PAIRABLE="Pairable"
-readonly OPTION_DISCOVERABLE="Discoverable"
-readonly OPTION_DIVIDER="-----------------------"
-readonly OPTION_EXIT="Exit"
-readonly OPTION_BACK="Back"
+readonly CONTROLLER_PROPERTY_POWER="Power"
+readonly CONTROLLER_PROPERTY_SCAN="Scan"
+readonly CONTROLLER_PROPERTY_PAIRABLE="Pairable"
+readonly CONTROLLER_PROPERTY_DISCOVERABLE="Discoverable"
 
 readonly DEVICE_PROPERTY_CONNECTED="Connected"
 readonly DEVICE_PROPERTY_PAIRED="Paired"
 readonly DEVICE_PROPERTY_TRUSTED="Trusted"
 
+readonly OPTION_DIVIDER="-----------------------"
+readonly OPTION_EXIT="Exit"
+readonly OPTION_BACK="Back"
+
 get_available_devices() {
-    mapfile -t devices < <(bluetoothctl devices | cut -d' ' -f3-)
+    local -n output="$1"
+    mapfile -t output < <(bluetoothctl devices | cut -d' ' -f3-)
 }
 
 get_property_state_string() {
@@ -23,16 +25,16 @@ get_property_state_string() {
     local expected_string
 
     case "$property" in
-        "$OPTION_POWER")
+        "$CONTROLLER_PROPERTY_POWER")
             expected_string="PowerState: on"
             ;;
-        "$OPTION_SCAN")
+        "$CONTROLLER_PROPERTY_SCAN")
             expected_string="Discovering: yes"
             ;;
-        "$OPTION_PAIRABLE")
+        "$CONTROLLER_PROPERTY_PAIRABLE")
             expected_string="Pairable: yes"
             ;;
-        "$OPTION_DISCOVERABLE")
+        "$CONTROLLER_PROPERTY_DISCOVERABLE")
             expected_string="Discoverable: yes"
             ;;
         *)
@@ -55,7 +57,7 @@ get_device_property_state_string() {
     [[ -z "$mac" ]] && return 1
     [[ -z "$property" ]] && return 1
 
-    if bluetoothctl info $mac | grep -q "$property: yes"; then
+    if bluetoothctl info "$mac" | grep -q "$property: yes"; then
         echo "$property: yes"
     else
         echo "$property: no"
@@ -70,16 +72,16 @@ get_mac_address() {
 }
 
 open_device_menu() {
-    local device_name=$1
+    local device_name="$1"
     [[ -z "$device_name" ]] && return 1
 
     local mac_address="$(get_mac_address "$device_name")"
     [[ -z "$mac_address" ]] && return 1
 
     local rofi_options=()
-    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_CONNECTED)")
-    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_PAIRED)")
-    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_TRUSTED)")
+    rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_CONNECTED")")
+    rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_PAIRED")")
+    rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_TRUSTED")")
     rofi_options+=("$OPTION_DIVIDER")
     rofi_options+=("$OPTION_BACK")
     rofi_options+=("$OPTION_EXIT")
@@ -126,9 +128,9 @@ open_device_menu() {
 open_main_menu() {
     local rofi_options=()
 
-    local power_state=$(get_property_state_string "$OPTION_POWER")
-    if [[ "$power_state" == "$OPTION_POWER: on" ]]; then
-        devices=()
+    local power_state=$(get_property_state_string "$CONTROLLER_PROPERTY_POWER")
+    if [[ "$power_state" == "$CONTROLLER_PROPERTY_POWER: on" ]]; then
+        local devices=()
         get_available_devices devices
         if (( ${#devices[@]} > 0 )); then
             devices+=("$OPTION_DIVIDER")
@@ -138,39 +140,41 @@ open_main_menu() {
         rofi_options+=("$power_state")
 
         rofi_options+=(
-            "$(get_property_state_string "$OPTION_SCAN")"
-            "$(get_property_state_string "$OPTION_PAIRABLE")"
-            "$(get_property_state_string "$OPTION_DISCOVERABLE")"
+            "$(get_property_state_string "$CONTROLLER_PROPERTY_PAIRABLE")"
+            "$(get_property_state_string "$CONTROLLER_PROPERTY_DISCOVERABLE")"
+            "$CONTROLLER_PROPERTY_SCAN"
+            "$OPTION_DIVIDER"
         )
     else
         rofi_options+=("$power_state")
     fi
+
     rofi_options+=("$OPTION_EXIT")
 
     local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "Bluetooth")
 
     case "$choice" in
-        "$OPTION_POWER: on")
+        "$CONTROLLER_PROPERTY_POWER: on")
             bluetoothctl power off
             ;;
-        "$OPTION_POWER: off")
+        "$CONTROLLER_PROPERTY_POWER: off")
             bluetoothctl power on
             ;;
-        "$OPTION_SCAN: off")
+        "$CONTROLLER_PROPERTY_SCAN")
             bluetoothctl --timeout 5 scan on
             open_main_menu
             ;;
-        "$OPTION_PAIRABLE: on")
+        "$CONTROLLER_PROPERTY_PAIRABLE: on")
             bluetoothctl pairable off
             ;;
-        "$OPTION_PAIRABLE: off")
+        "$CONTROLLER_PROPERTY_PAIRABLE: off")
             bluetoothctl pairable on
             ;;
-        "$OPTION_DISCOVERABLE: on")
+        "$CONTROLLER_PROPERTY_DISCOVERABLE: on")
             bluetoothctl discoverable off
             echo "Discoverable -> off"
             ;;
-        "$OPTION_DISCOVERABLE: off")
+        "$CONTROLLER_PROPERTY_DISCOVERABLE: off")
             bluetoothctl discoverable on
             ;;
         "$OPTION_EXIT")
