@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 
-rofi_command="rofi -dmenu $@ -p Bluetooth"
+rofi_command="rofi -dmenu $@"
 
 readonly OPTION_POWER="Power"
 readonly OPTION_SCAN="Scan"
 readonly OPTION_PAIRABLE="Pairable"
 readonly OPTION_DISCOVERABLE="Discoverable"
+readonly OPTION_DIVIDER="-----------------------"
 readonly OPTION_EXIT="Exit"
+readonly OPTION_BACK="Back"
+
+readonly DEVICE_PROPERTY_CONNECTED="Connected"
+readonly DEVICE_PROPERTY_PAIRED="Paired"
+readonly DEVICE_PROPERTY_TRUSTED="Trusted"
 
 get_available_devices() {
-    mapfile -t devices < <(bluetoothctl devices| cut -d' ' -f3-)
+    mapfile -t devices < <(bluetoothctl devices | cut -d' ' -f3-)
 }
 
 get_property_state_string() {
@@ -41,15 +47,91 @@ get_property_state_string() {
     fi
 }
 
-open_main_menu() {
-    rofi_options=()
+get_device_property_state_string() {
+    # paired/connected/trusted/blocked
+    local mac="$1"
+    local property="$2"
 
-    power_state=$(get_property_state_string "$OPTION_POWER")
+    [[ -z "$mac" ]] && return 1
+    [[ -z "$property" ]] && return 1
+
+    if bluetoothctl info $mac | grep -q "$property: yes"; then
+        echo "$property: yes"
+    else
+        echo "$property: no"
+    fi
+}
+
+get_mac_address() {
+    local device_name="$1"
+    [[ -z "$device_name" ]] && return 1
+
+    bluetoothctl devices | grep -F "$device_name" | cut -d' ' -f2
+}
+
+open_device_menu() {
+    local device_name=$1
+    [[ -z "$device_name" ]] && return 1
+
+    local mac_address="$(get_mac_address "$device_name")"
+    [[ -z "$mac_address" ]] && return 1
+
+    local rofi_options=()
+    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_CONNECTED)")
+    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_PAIRED)")
+    rofi_options+=("$(get_device_property_state_string $mac_address $DEVICE_PROPERTY_TRUSTED)")
+    rofi_options+=("$OPTION_DIVIDER")
+    rofi_options+=("$OPTION_BACK")
+    rofi_options+=("$OPTION_EXIT")
+
+    local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "$device_name")
+
+    case "$choice" in
+        "$DEVICE_PROPERTY_CONNECTED: yes")
+            echo "connected -> no"
+            open_device_menu "$device_name"
+            ;;
+        "$DEVICE_PROPERTY_CONNECTED: no")
+            echo "connected -> yes"
+            open_device_menu "$device_name"
+            ;;
+        "$DEVICE_PROPERTY_PAIRED: yes")
+            echo "paired -> no"
+            open_device_menu "$device_name"
+            ;;
+        "$DEVICE_PROPERTY_PAIRED: no")
+            echo "paired -> yes"
+            open_device_menu "$device_name"
+            ;;
+        "$DEVICE_PROPERTY_TRUSTED: yes")
+            echo "trusted -> no"
+            open_device_menu "$device_name"
+            ;;
+        "$DEVICE_PROPERTY_TRUSTED: no")
+            echo "trusted -> yes"
+            open_device_menu "$device_name"
+            ;;
+        "$OPTION_BACK")
+            open_main_menu
+            ;;
+        "$OPTION_EXIT")
+            exit 0
+            ;;
+        *)
+            exit 1
+            ;;
+    esac
+}
+
+open_main_menu() {
+    local rofi_options=()
+
+    local power_state=$(get_property_state_string "$OPTION_POWER")
     if [[ "$power_state" == "$OPTION_POWER: on" ]]; then
         devices=()
         get_available_devices devices
         if (( ${#devices[@]} > 0 )); then
-            devices+=("======================")
+            devices+=("$OPTION_DIVIDER")
         fi
         rofi_options+=("${devices[@]}")
 
@@ -65,7 +147,7 @@ open_main_menu() {
     fi
     rofi_options+=("$OPTION_EXIT")
 
-    choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command})
+    local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "Bluetooth")
 
     case "$choice" in
         "$OPTION_POWER: on")
@@ -95,10 +177,12 @@ open_main_menu() {
             exit 0
             ;;
         *)
+            [[ -z "$choice" ]] && return 1
+
+            open_device_menu "$choice"
             exit 0
             ;;
     esac
-
 }
 
 open_main_menu
