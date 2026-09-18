@@ -104,27 +104,27 @@ open_device_menu() {
 
     case "$choice" in
         "$DEVICE_PROPERTY_CONNECTED: yes")
-            echo "connected -> no"
+            bluetoothctl disconnect "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$DEVICE_PROPERTY_CONNECTED: no")
-            echo "connected -> yes"
+            bluetoothctl connect "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$DEVICE_PROPERTY_PAIRED: yes")
-            echo "paired -> no"
+            bluetoothctl unpair "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$DEVICE_PROPERTY_PAIRED: no")
-            echo "paired -> yes"
+            bluetoothctl pair "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$DEVICE_PROPERTY_TRUSTED: yes")
-            echo "trusted -> no"
+            bluetoothctl untrust "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$DEVICE_PROPERTY_TRUSTED: no")
-            echo "trusted -> yes"
+            bluetoothctl trust "$mac_address"
             open_device_menu "$mac_address"
             ;;
         "$OPTION_BACK")
