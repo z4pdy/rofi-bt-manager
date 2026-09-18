@@ -12,7 +12,7 @@ readonly DEVICE_PROPERTY_PAIRED="Paired"
 readonly DEVICE_PROPERTY_TRUSTED="Trusted"
 readonly DEVICE_OPTION_REMOVE="Remove"
 
-readonly OPTION_DIVIDER="-----------------------"
+readonly OPTION_DIVIDER="----------------"
 readonly OPTION_EXIT="Exit"
 readonly OPTION_BACK="Back"
 
@@ -102,7 +102,13 @@ open_device_menu() {
     rofi_options+=("$OPTION_BACK")
     rofi_options+=("$OPTION_EXIT")
 
-    local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "$device_name")
+    local prompt
+    if [[ "${device_name//[-:]/}" == "${mac_address//[-:]/}" ]]; then
+        prompt="$mac_address"
+    else
+        prompt="$device_name ($mac_address)"
+    fi
+    local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "$prompt")
 
     case "$choice" in
         "$DEVICE_PROPERTY_CONNECTED: yes")
