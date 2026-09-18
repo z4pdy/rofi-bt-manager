@@ -10,6 +10,7 @@ readonly CONTROLLER_PROPERTY_DISCOVERABLE="Discoverable"
 readonly DEVICE_PROPERTY_CONNECTED="Connected"
 readonly DEVICE_PROPERTY_PAIRED="Paired"
 readonly DEVICE_PROPERTY_TRUSTED="Trusted"
+readonly DEVICE_OPTION_REMOVE="Remove"
 
 readonly OPTION_DIVIDER="-----------------------"
 readonly OPTION_EXIT="Exit"
@@ -96,6 +97,7 @@ open_device_menu() {
     rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_CONNECTED")")
     rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_PAIRED")")
     rofi_options+=("$(get_device_property_state_string "$mac_address" "$DEVICE_PROPERTY_TRUSTED")")
+    rofi_options+=("$DEVICE_OPTION_REMOVE")
     rofi_options+=("$OPTION_DIVIDER")
     rofi_options+=("$OPTION_BACK")
     rofi_options+=("$OPTION_EXIT")
@@ -126,6 +128,10 @@ open_device_menu() {
         "$DEVICE_PROPERTY_TRUSTED: no")
             bluetoothctl trust "$mac_address"
             open_device_menu "$mac_address"
+            ;;
+        "$DEVICE_OPTION_REMOVE")
+            bluetoothctl remove "$mac_address"
+            open_main_menu
             ;;
         "$OPTION_BACK")
             open_main_menu
