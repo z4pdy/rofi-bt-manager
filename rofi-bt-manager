@@ -6,6 +6,7 @@ readonly CONTROLLER_PROPERTY_POWER="Power"
 readonly CONTROLLER_PROPERTY_SCAN="Scan"
 readonly CONTROLLER_PROPERTY_PAIRABLE="Pairable"
 readonly CONTROLLER_PROPERTY_DISCOVERABLE="Discoverable"
+readonly CONTROLLER_OPTION_RESTART_AGENT="Restart agent"
 
 readonly DEVICE_PROPERTY_CONNECTED="Connected"
 readonly DEVICE_PROPERTY_PAIRED="Paired"
@@ -201,6 +202,11 @@ open_main_menu() {
             ;;
         "$CONTROLLER_PROPERTY_DISCOVERABLE: off")
             bluetoothctl discoverable on
+            ;;
+        "$CONTROLLER_OPTION_RESTART_AGENT")
+            bluetoothctl agent off
+            bluetoothctl agent on
+            bluetoothctl default-agent
             ;;
         "$OPTION_EXIT")
             exit 0
