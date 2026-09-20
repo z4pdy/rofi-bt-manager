@@ -27,7 +27,7 @@ get_available_devices() {
         mac="$(cut -d' ' -f2 <<< "$line")"
         name="$(cut -d' ' -f3- <<< "$line")"
         devices["$mac"]="$name"
-    done < <(bluetoothctl devices)
+    done < <(bluetoothctl devices | sed $'s/\033\\[[0-9;]*m//g')
 }
 
 get_property_state_string() {
