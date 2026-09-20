@@ -6,7 +6,7 @@ readonly CONTROLLER_PROPERTY_POWER="Power"
 readonly CONTROLLER_PROPERTY_SCAN="Scan"
 readonly CONTROLLER_PROPERTY_PAIRABLE="Pairable"
 readonly CONTROLLER_PROPERTY_DISCOVERABLE="Discoverable"
-readonly CONTROLLER_OPTION_RESTART_AGENT="Restart agent"
+readonly CONTROLLER_OPTION_RESTART_AGENT="Restart pairing agent"
 
 readonly DEVICE_PROPERTY_CONNECTED="Connected"
 readonly DEVICE_PROPERTY_PAIRED="Paired"
@@ -178,14 +178,17 @@ open_main_menu() {
 
     rofi_options+=("$OPTION_EXIT")
 
-    local choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "Bluetooth")
+    local choice
+    choice=$(printf '%s\n' "${rofi_options[@]}" | ${rofi_command} -p "Bluetooth")
 
     case "$choice" in
         "$CONTROLLER_PROPERTY_POWER: on")
             bluetoothctl power off
+            open_main_menu
             ;;
         "$CONTROLLER_PROPERTY_POWER: off")
             bluetoothctl power on
+            open_main_menu
             ;;
         "$CONTROLLER_PROPERTY_SCAN")
             bluetoothctl --timeout 5 scan on
@@ -193,19 +196,23 @@ open_main_menu() {
             ;;
         "$CONTROLLER_PROPERTY_PAIRABLE: on")
             bluetoothctl pairable off
+            open_main_menu
             ;;
         "$CONTROLLER_PROPERTY_PAIRABLE: off")
             bluetoothctl pairable on
+            open_main_menu
             ;;
         "$CONTROLLER_PROPERTY_DISCOVERABLE: on")
             bluetoothctl discoverable off
-            echo "Discoverable -> off"
+            open_main_menu
             ;;
         "$CONTROLLER_PROPERTY_DISCOVERABLE: off")
             bluetoothctl discoverable on
+            open_main_menu
             ;;
         "$CONTROLLER_OPTION_RESTART_AGENT")
             bluetoothctl <<< $'agent off\nagent on\ndefault-agent'
+            open_main_menu
             ;;
         "$OPTION_EXIT")
             exit 0
