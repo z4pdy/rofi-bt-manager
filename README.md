@@ -1,5 +1,6 @@
 # 🔵 rofi-bt-manager
 A Rofi-based Bluetooth manager for Linux
+
 Manage Bluetooth devices and controller settings directly from a Rofi menu.
 > A modern alternative to [rofi-bluetooth](https://github.com/nickclyde/rofi-bluetooth).
 <p align="center">
