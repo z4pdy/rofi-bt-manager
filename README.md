@@ -43,7 +43,7 @@ Run the script to open the Bluetooth manager:
 ```
 Additional arguments passed to the script are forwarded to Rofi.
 
-## Waybar integration example
+### Waybar integration example
 Add `rofi-bt-manager` to your `PATH`, then add the following module to your Waybar config:
 
 ```json
