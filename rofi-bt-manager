@@ -25,7 +25,11 @@ get_available_devices() {
     local line mac name
     while IFS= read -r line; do
         mac="$(cut -d' ' -f2 <<< "$line")"
+
         name="$(cut -d' ' -f3- <<< "$line")"
+        name="${name%% RSSI*}"
+        name="${name%% Discovering:*}"
+
         devices["$mac"]="$name"
     done < <(bluetoothctl devices | sed $'s/\033\\[[0-9;]*m//g')
 }
