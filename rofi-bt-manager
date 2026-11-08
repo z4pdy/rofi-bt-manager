@@ -215,7 +215,11 @@ open_main_menu() {
             open_main_menu
             ;;
         "$CONTROLLER_OPTION_RESTART_AGENT")
-            bluetoothctl <<< $'agent off\nagent on\ndefault-agent\npower off\npower on'
+            bluetoothctl <<< $'agent off\nagent on\ndefault-agent'
+            sleep 1
+            bluetoothctl <<< $'power off'
+            sleep 1
+            bluetoothctl <<< $'power on'
             open_main_menu
             ;;
         "$OPTION_EXIT")
